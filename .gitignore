@@ -1,0 +1,8 @@
+.env
+.env.*
+*.log
+*.exe
+tmp/
+coverage.out
+dist/
+
