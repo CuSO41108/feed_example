@@ -1,0 +1,7 @@
+.git
+mysql_data
+tmp
+*.log
+*.exe
+docs/*.tmp
+
