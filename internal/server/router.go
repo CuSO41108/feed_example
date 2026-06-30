@@ -27,6 +27,8 @@ func NewRouter(jwtSecret string, handlers Handlers) *gin.Engine {
 	router.GET("/healthz", func(c *gin.Context) {
 		response.OK(c, gin.H{"status": "ok"})
 	})
+	router.StaticFile("/", "web/index.html")
+	router.Static("/assets", "web/assets")
 	router.GET("/swagger/index.html", swaggerIndex)
 	router.StaticFile("/swagger/doc.yaml", "docs/openapi.yaml")
 

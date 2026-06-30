@@ -18,8 +18,8 @@ WORKDIR /app
 COPY --from=build /out/api /app/api
 COPY --from=build /out/worker /app/worker
 COPY --from=build /src/docs /app/docs
+COPY --from=build /src/web /app/web
 
 EXPOSE 8080
 
 CMD ["/app/api"]
-

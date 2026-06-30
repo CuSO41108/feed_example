@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Friend Zone</title>
+  <link rel="stylesheet" href="/assets/app.css?v=3">
+</head>
+<body>
+  <div class="moment-shell">
+    <header class="window-bar">
+      <div class="bar-tools" aria-label="快捷操作">
+        <button class="icon-button" id="notifyButton" type="button" title="状态">
+          <i data-lucide="bell"></i>
+        </button>
+        <button class="icon-button" id="cameraButton" type="button" title="发布">
+          <i data-lucide="camera"></i>
+        </button>
+        <button class="icon-button" id="refreshButton" type="button" title="刷新">
+          <i data-lucide="rotate-cw"></i>
+        </button>
+      </div>
+      <h1>朋友圈</h1>
+      <div class="bar-tools right" aria-hidden="true">
+        <span class="window-mark">一</span>
+        <span class="window-mark">×</span>
+      </div>
+    </header>
+
+    <section class="account-strip" id="accountStrip">
+      <div class="mode-switch" role="tablist" aria-label="登录方式">
+        <button class="mode-button active" id="loginTab" type="button">登录</button>
+        <button class="mode-button" id="registerTab" type="button">注册</button>
+      </div>
+      <form class="account-form" id="authForm">
+        <input id="usernameInput" name="username" autocomplete="username" placeholder="账号" required minlength="3" maxlength="64">
+        <input id="passwordInput" name="password" type="password" autocomplete="current-password" placeholder="密码" required minlength="6" maxlength="128">
+        <button class="solid-button" id="authSubmit" type="submit">登录</button>
+      </form>
+    </section>
+
+    <section class="session-strip hidden" id="sessionStrip">
+      <div class="identity">
+        <span class="identity-avatar" id="avatar">U</span>
+        <div>
+          <strong id="sessionName">-</strong>
+          <span id="sessionId">-</span>
+        </div>
+      </div>
+      <div class="session-actions">
+        <input id="followeeInput" inputmode="numeric" placeholder="关注用户 ID">
+        <button class="plain-button" id="followButton" type="button">关注</button>
+        <button class="plain-button" id="unfollowButton" type="button">取关</button>
+        <button class="plain-button" id="logoutButton" type="button">退出</button>
+      </div>
+    </section>
+
+    <section class="composer hidden" id="composer">
+      <textarea id="postText" maxlength="2000" placeholder="这一刻的想法..."></textarea>
+      <div class="composer-actions">
+        <span id="postCounter">0 / 2000</span>
+        <button class="solid-button" id="publishButton" type="button">发表</button>
+      </div>
+    </section>
+
+    <main class="stream" id="stream" aria-live="polite">
+      <div class="refresh-hint" id="refreshHint">准备就绪</div>
+      <section class="feed-list" id="feedList">
+        <div class="empty-view">
+          <strong>暂无动态</strong>
+          <span>登录后刷新关注流</span>
+        </div>
+      </section>
+      <button class="load-more" id="loadOlderButton" type="button">加载更早</button>
+    </main>
+
+    <footer class="status-bar">
+      <span id="apiStatus">API 检查中</span>
+      <span id="cursorStatus">Cursor -</span>
+      <span id="lastAction">-</span>
+    </footer>
+  </div>
+
+  <div class="post-menu hidden" id="postMenu">
+    <button id="deletePostButton" type="button">
+      <i data-lucide="trash-2"></i>
+      删除动态
+    </button>
+  </div>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+
+  <script src="/assets/app.js?v=3"></script>
+</body>
+</html>

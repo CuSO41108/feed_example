@@ -18,6 +18,7 @@ docker compose up --build
 
 API:
 
+- Web app: `http://localhost:8080/`
 - Health check: `http://localhost:8080/healthz`
 - Swagger UI: `http://localhost:8080/swagger/index.html`
 - Kafka UI: `http://localhost:8081`
@@ -36,4 +37,4 @@ This first version focuses on the Timeline Feed main path:
 - Big V push-pull hybrid fanout
 - Kafka fanout worker
 - Redis ZSET cache for active users' latest 1000 inbox entries
-
+- Static frontend for login, posting, follow operations, and Timeline Feed reads
