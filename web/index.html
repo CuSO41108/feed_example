@@ -4,28 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Friend Zone</title>
-  <link rel="stylesheet" href="/assets/app.css?v=3">
+  <link rel="stylesheet" href="/assets/app.css?v=4">
 </head>
 <body>
   <div class="moment-shell">
-    <header class="window-bar">
-      <div class="bar-tools" aria-label="快捷操作">
-        <button class="icon-button" id="notifyButton" type="button" title="状态">
-          <i data-lucide="bell"></i>
-        </button>
-        <button class="icon-button" id="cameraButton" type="button" title="发布">
-          <i data-lucide="camera"></i>
-        </button>
-        <button class="icon-button" id="refreshButton" type="button" title="刷新">
-          <i data-lucide="rotate-cw"></i>
+    <section class="cover-panel">
+      <header class="window-bar">
+        <div class="bar-tools" aria-label="快捷操作">
+          <button class="icon-button" id="notifyButton" type="button" title="状态">
+            <i data-lucide="bell"></i>
+          </button>
+          <button class="icon-button" id="cameraButton" type="button" title="发布">
+            <i data-lucide="camera"></i>
+          </button>
+          <button class="icon-button" id="refreshButton" type="button" title="刷新">
+            <i data-lucide="rotate-cw"></i>
+          </button>
+        </div>
+        <h1>朋友圈</h1>
+        <div class="bar-tools right">
+          <button class="window-mark" id="logoutButton" type="button" title="退出">一</button>
+          <span class="window-mark" aria-hidden="true">×</span>
+        </div>
+      </header>
+
+      <div class="cover-profile">
+        <div class="profile-copy">
+          <strong id="sessionName">Friend Zone</strong>
+          <span id="sessionId">登录后查看关注流</span>
+        </div>
+        <button class="profile-avatar" id="profileButton" type="button" title="账号">
+          <span id="avatar">F</span>
         </button>
       </div>
-      <h1>朋友圈</h1>
-      <div class="bar-tools right" aria-hidden="true">
-        <span class="window-mark">一</span>
-        <span class="window-mark">×</span>
-      </div>
-    </header>
+    </section>
 
     <section class="account-strip" id="accountStrip">
       <div class="mode-switch" role="tablist" aria-label="登录方式">
@@ -37,22 +49,6 @@
         <input id="passwordInput" name="password" type="password" autocomplete="current-password" placeholder="密码" required minlength="6" maxlength="128">
         <button class="solid-button" id="authSubmit" type="submit">登录</button>
       </form>
-    </section>
-
-    <section class="session-strip hidden" id="sessionStrip">
-      <div class="identity">
-        <span class="identity-avatar" id="avatar">U</span>
-        <div>
-          <strong id="sessionName">-</strong>
-          <span id="sessionId">-</span>
-        </div>
-      </div>
-      <div class="session-actions">
-        <input id="followeeInput" inputmode="numeric" placeholder="关注用户 ID">
-        <button class="plain-button" id="followButton" type="button">关注</button>
-        <button class="plain-button" id="unfollowButton" type="button">取关</button>
-        <button class="plain-button" id="logoutButton" type="button">退出</button>
-      </div>
     </section>
 
     <section class="composer hidden" id="composer">
@@ -88,8 +84,17 @@
     </button>
   </div>
 
+  <div class="author-popover hidden" id="authorPopover">
+    <strong id="authorPopoverName">用户</strong>
+    <span id="authorPopoverId">ID -</span>
+    <div class="author-actions">
+      <button class="plain-button" id="followAuthorButton" type="button">关注</button>
+      <button class="plain-button danger" id="unfollowAuthorButton" type="button">取关</button>
+    </div>
+  </div>
+
   <div class="toast hidden" id="toast" role="status"></div>
 
-  <script src="/assets/app.js?v=3"></script>
+  <script src="/assets/app.js?v=4"></script>
 </body>
 </html>

@@ -11,6 +11,8 @@ const state = {
   hasMore: false,
   feedLoading: false,
   menuContentId: "",
+  menuAuthorId: "",
+  composerOpen: false,
   wheelAt: 0,
 };
 
@@ -18,7 +20,6 @@ const $ = (id) => document.getElementById(id);
 
 const el = {
   accountStrip: $("accountStrip"),
-  sessionStrip: $("sessionStrip"),
   composer: $("composer"),
   loginTab: $("loginTab"),
   registerTab: $("registerTab"),
@@ -27,6 +28,7 @@ const el = {
   usernameInput: $("usernameInput"),
   passwordInput: $("passwordInput"),
   logoutButton: $("logoutButton"),
+  profileButton: $("profileButton"),
   avatar: $("avatar"),
   sessionName: $("sessionName"),
   sessionId: $("sessionId"),
@@ -40,9 +42,11 @@ const el = {
   feedList: $("feedList"),
   stream: $("stream"),
   refreshHint: $("refreshHint"),
-  followeeInput: $("followeeInput"),
-  followButton: $("followButton"),
-  unfollowButton: $("unfollowButton"),
+  authorPopover: $("authorPopover"),
+  authorPopoverName: $("authorPopoverName"),
+  authorPopoverId: $("authorPopoverId"),
+  followAuthorButton: $("followAuthorButton"),
+  unfollowAuthorButton: $("unfollowAuthorButton"),
   apiStatus: $("apiStatus"),
   cursorStatus: $("cursorStatus"),
   lastAction: $("lastAction"),
@@ -139,15 +143,17 @@ async function checkHealth() {
 function updateSessionView() {
   const signedIn = Boolean(state.token && state.userId);
   el.accountStrip.classList.toggle("hidden", signedIn);
-  el.sessionStrip.classList.toggle("hidden", !signedIn);
-  el.composer.classList.toggle("hidden", !signedIn);
+  el.composer.classList.toggle("hidden", !signedIn || !state.composerOpen);
+  el.logoutButton.classList.toggle("hidden", !signedIn);
   el.loadOlderButton.disabled = !signedIn;
   el.refreshButton.disabled = !signedIn;
   el.cameraButton.disabled = !signedIn;
+  el.profileButton.disabled = !signedIn;
+  document.body.classList.toggle("signed-in", signedIn);
 
-  el.sessionName.textContent = state.username || "已登录";
-  el.sessionId.textContent = state.userId ? `ID ${state.userId}` : "-";
-  el.avatar.textContent = (state.username || "U").slice(0, 1).toUpperCase();
+  el.sessionName.textContent = signedIn ? state.username || "已登录" : "Friend Zone";
+  el.sessionId.textContent = signedIn && state.userId ? `ID ${state.userId}` : "登录后查看关注流";
+  el.avatar.textContent = (signedIn ? state.username || "U" : "F").slice(0, 1).toUpperCase();
 }
 
 function saveSession(data, username) {
@@ -168,6 +174,7 @@ function clearSession() {
   state.topCursor = "";
   state.bottomCursor = "";
   state.hasMore = false;
+  state.composerOpen = false;
   localStorage.removeItem("fz_token");
   localStorage.removeItem("fz_user_id");
   localStorage.removeItem("fz_username");
@@ -217,6 +224,7 @@ async function publishPost() {
     });
     el.postText.value = "";
     updateCounter();
+    setComposerOpen(false);
     showToast(`已发表 ${data.content_id}`);
     setLastAction("发表动态");
     setHint("向上滚轮或点刷新可查看最新", true);
@@ -228,16 +236,34 @@ async function publishPost() {
   }
 }
 
-async function followUser(shouldFollow) {
-  const followeeId = el.followeeInput.value.trim();
-  if (!/^\d+$/.test(followeeId)) {
-    showToast("请输入用户 ID");
+function setComposerOpen(open) {
+  if (!state.token) {
+    showToast("请先登录");
     return;
   }
-  const button = shouldFollow ? el.followButton : el.unfollowButton;
+  state.composerOpen = open;
+  el.composer.classList.toggle("hidden", !state.composerOpen);
+  el.cameraButton.classList.toggle("active", state.composerOpen);
+  if (state.composerOpen) {
+    window.setTimeout(() => el.postText.focus(), 0);
+  }
+}
+
+async function followAuthor(shouldFollow) {
+  const followeeId = state.menuAuthorId;
+  if (!/^\d+$/.test(followeeId)) {
+    showToast("没有可操作的用户");
+    return;
+  }
+  if (String(followeeId) === String(state.userId)) {
+    showToast("不能关注自己");
+    return;
+  }
+  const button = shouldFollow ? el.followAuthorButton : el.unfollowAuthorButton;
   setBusy(button, true);
   try {
     await request(`/follows/${followeeId}`, { method: shouldFollow ? "POST" : "DELETE" });
+    hideAuthorPopover();
     showToast(shouldFollow ? "已关注" : "已取关");
     setLastAction(shouldFollow ? "关注用户" : "取关用户");
     await loadFeed("latest", { quiet: true });
@@ -336,6 +362,7 @@ function dedupe(items) {
 
 function renderFeed() {
   hidePostMenu();
+  hideAuthorPopover();
   if (!state.items.length) {
     el.feedList.innerHTML = `
       <div class="empty-view">
@@ -350,6 +377,7 @@ function renderFeed() {
 
   el.feedList.innerHTML = state.items.map((item, index) => renderItem(item, index)).join("");
   bindMoreButtons();
+  bindAuthorTriggers();
   mountIcons();
 }
 
@@ -360,7 +388,9 @@ function renderItem(item, index) {
   const authorLabel = `用户 ${item.author_id}`;
   return `
     <article class="feed-item ${hasMedia ? "has-media" : ""} ${isMine ? "is-mine" : ""}">
-      <div class="feed-avatar" aria-hidden="true">${avatarArt(index)}</div>
+      <button class="author-trigger" type="button" data-author-id="${escapeHTML(String(item.author_id))}" title="关注或取关该用户">
+        <span class="feed-avatar" aria-hidden="true">${avatarArt(index)}</span>
+      </button>
       <div class="feed-main">
         <div class="feed-head">
           <h2 class="feed-author">${escapeHTML(authorLabel)}</h2>
@@ -400,6 +430,15 @@ function bindMoreButtons() {
   });
 }
 
+function bindAuthorTriggers() {
+  document.querySelectorAll(".author-trigger").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const id = button.getAttribute("data-author-id") || "";
+      showAuthorPopover(id, event.currentTarget);
+    });
+  });
+}
+
 function showPostMenu(contentId, anchor) {
   state.menuContentId = contentId;
   const rect = anchor.getBoundingClientRect();
@@ -410,6 +449,23 @@ function showPostMenu(contentId, anchor) {
 
 function hidePostMenu() {
   el.postMenu.classList.add("hidden");
+}
+
+function showAuthorPopover(authorId, anchor) {
+  state.menuAuthorId = authorId;
+  const rect = anchor.getBoundingClientRect();
+  el.authorPopoverName.textContent = `用户 ${authorId}`;
+  el.authorPopoverId.textContent = `ID ${authorId}`;
+  const isMine = String(authorId) === String(state.userId);
+  el.followAuthorButton.disabled = isMine;
+  el.unfollowAuthorButton.disabled = isMine;
+  el.authorPopover.style.left = `${Math.min(window.innerWidth - 220, Math.max(12, rect.left + 8))}px`;
+  el.authorPopover.style.top = `${Math.min(window.innerHeight - 130, rect.bottom + 10)}px`;
+  el.authorPopover.classList.remove("hidden");
+}
+
+function hideAuthorPopover() {
+  el.authorPopover.classList.add("hidden");
 }
 
 function updateCursorStatus() {
@@ -493,19 +549,26 @@ el.logoutButton.addEventListener("click", () => {
   showToast("已退出");
   setLastAction("退出登录");
 });
+el.profileButton.addEventListener("click", () => {
+  if (!state.token) return;
+  showToast(`${state.username || "已登录"} · ${state.userId}`);
+});
 el.postText.addEventListener("input", updateCounter);
 el.publishButton.addEventListener("click", publishPost);
 el.refreshButton.addEventListener("click", () => loadFeed("latest"));
-el.cameraButton.addEventListener("click", () => el.postText.focus());
+el.cameraButton.addEventListener("click", () => setComposerOpen(!state.composerOpen));
 el.notifyButton.addEventListener("click", () => showToast(el.apiStatus.textContent));
 el.loadOlderButton.addEventListener("click", () => loadFeed("older"));
-el.followButton.addEventListener("click", () => followUser(true));
-el.unfollowButton.addEventListener("click", () => followUser(false));
+el.followAuthorButton.addEventListener("click", () => followAuthor(true));
+el.unfollowAuthorButton.addEventListener("click", () => followAuthor(false));
 el.deletePostButton.addEventListener("click", deletePost);
 el.stream.addEventListener("wheel", handleWheel, { passive: true });
 document.addEventListener("click", (event) => {
   if (!el.postMenu.contains(event.target) && !event.target.closest(".more-button")) {
     hidePostMenu();
+  }
+  if (!el.authorPopover.contains(event.target) && !event.target.closest(".author-trigger")) {
+    hideAuthorPopover();
   }
 });
 
