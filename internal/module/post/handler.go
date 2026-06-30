@@ -49,7 +49,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		h.writeError(c, err)
 		return
 	}
-	response.OK(c, gin.H{"content_id": contentID, "deleted": true})
+	response.OK(c, gin.H{"content_id": strconv.FormatInt(contentID, 10), "deleted": true})
 }
 
 func (h *Handler) Get(c *gin.Context) {

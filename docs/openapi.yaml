@@ -156,14 +156,13 @@ components:
       type: object
       properties:
         content_id:
-          type: integer
-          format: int64
+          type: string
+          example: "330414614359576576"
         author_id:
-          type: integer
-          format: int64
+          type: string
+          example: "330414398441000960"
         content_text:
           type: string
         publish_time:
           type: string
           format: date-time
-

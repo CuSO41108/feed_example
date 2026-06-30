@@ -36,8 +36,8 @@ type Query struct {
 }
 
 type Item struct {
-	ContentID   int64     `json:"content_id"`
-	AuthorID    int64     `json:"author_id"`
+	ContentID   int64     `json:"content_id,string"`
+	AuthorID    int64     `json:"author_id,string"`
 	ContentText string    `json:"content_text"`
 	PublishTime time.Time `json:"publish_time"`
 }

@@ -34,7 +34,7 @@ func (h *Handler) Follow(c *gin.Context) {
 		h.writeError(c, err)
 		return
 	}
-	response.OK(c, gin.H{"followee_id": followeeID, "following": true})
+	response.OK(c, gin.H{"followee_id": strconv.FormatInt(followeeID, 10), "following": true})
 }
 
 func (h *Handler) Unfollow(c *gin.Context) {
@@ -47,7 +47,7 @@ func (h *Handler) Unfollow(c *gin.Context) {
 		h.writeError(c, err)
 		return
 	}
-	response.OK(c, gin.H{"followee_id": followeeID, "following": false})
+	response.OK(c, gin.H{"followee_id": strconv.FormatInt(followeeID, 10), "following": false})
 }
 
 func (h *Handler) writeError(c *gin.Context, err error) {

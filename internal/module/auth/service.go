@@ -39,7 +39,7 @@ type LoginRequest struct {
 }
 
 type AuthResponse struct {
-	UserID int64  `json:"user_id"`
+	UserID int64  `json:"user_id,string"`
 	Token  string `json:"token"`
 }
 
