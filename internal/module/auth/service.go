@@ -39,8 +39,11 @@ type LoginRequest struct {
 }
 
 type AuthResponse struct {
-	UserID int64  `json:"user_id,string"`
-	Token  string `json:"token"`
+	UserID    int64  `json:"user_id,string"`
+	Username  string `json:"username"`
+	Nickname  string `json:"nickname"`
+	AvatarKey string `json:"avatar_key"`
+	Token     string `json:"token"`
 }
 
 func NewService(db *sql.DB, idgen *snowflake.Generator, activity *activity.ActivityService, secret string, ttl time.Duration) *Service {
@@ -66,8 +69,8 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (AuthRespon
 	defer tx.Rollback()
 
 	_, err = tx.ExecContext(ctx, `
-		INSERT INTO users (user_id, username, password_hash, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?)`, userID, req.Username, string(hash), now, now)
+		INSERT INTO users (user_id, username, nickname, avatar_key, password_hash, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`, userID, req.Username, req.Username, defaultAvatarKey(userID), string(hash), now, now)
 	if err != nil {
 		return AuthResponse{}, err
 	}
@@ -86,16 +89,25 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (AuthRespon
 	if err != nil {
 		return AuthResponse{}, err
 	}
-	return AuthResponse{UserID: userID, Token: token}, nil
+	return AuthResponse{
+		UserID:    userID,
+		Username:  req.Username,
+		Nickname:  req.Username,
+		AvatarKey: defaultAvatarKey(userID),
+		Token:     token,
+	}, nil
 }
 
 func (s *Service) Login(ctx context.Context, req LoginRequest) (AuthResponse, error) {
 	var userID int64
+	var username string
+	var nickname string
+	var avatarKey string
 	var hash string
 	err := s.db.QueryRowContext(ctx, `
-		SELECT user_id, password_hash
+		SELECT user_id, username, COALESCE(NULLIF(nickname, ''), username), avatar_key, password_hash
 		FROM users
-		WHERE username = ? AND status = 1`, strings.TrimSpace(req.Username)).Scan(&userID, &hash)
+		WHERE username = ? AND status = 1`, strings.TrimSpace(req.Username)).Scan(&userID, &username, &nickname, &avatarKey, &hash)
 	if err == sql.ErrNoRows {
 		return AuthResponse{}, ErrInvalidCredentials
 	}
@@ -112,7 +124,18 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (AuthResponse, er
 	if err != nil {
 		return AuthResponse{}, err
 	}
-	return AuthResponse{UserID: userID, Token: token}, nil
+	return AuthResponse{
+		UserID:    userID,
+		Username:  username,
+		Nickname:  nickname,
+		AvatarKey: avatarKey,
+		Token:     token,
+	}, nil
+}
+
+func defaultAvatarKey(userID int64) string {
+	index := userID%20 + 1
+	return "avatar-" + strconv.FormatInt(index, 10)
 }
 
 func (s *Service) signToken(userID int64) (string, error) {

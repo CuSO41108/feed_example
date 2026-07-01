@@ -161,6 +161,12 @@ components:
         author_id:
           type: string
           example: "330414398441000960"
+        author_nickname:
+          type: string
+          example: "林知夏"
+        author_avatar_key:
+          type: string
+          example: "avatar-01"
         content_text:
           type: string
         publish_time:

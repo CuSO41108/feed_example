@@ -4,6 +4,8 @@ SET time_zone = '+00:00';
 CREATE TABLE IF NOT EXISTS users (
   user_id BIGINT NOT NULL,
   username VARCHAR(64) NOT NULL,
+  nickname VARCHAR(64) NOT NULL DEFAULT '',
+  avatar_key VARCHAR(32) NOT NULL DEFAULT 'avatar-01',
   password_hash VARCHAR(255) NOT NULL,
   follower_count BIGINT NOT NULL DEFAULT 0,
   following_count BIGINT NOT NULL DEFAULT 0,
@@ -78,4 +80,3 @@ CREATE TABLE IF NOT EXISTS event_outbox (
   PRIMARY KEY (event_id),
   KEY idx_status_created (status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-

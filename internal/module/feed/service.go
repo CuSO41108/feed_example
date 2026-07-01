@@ -36,10 +36,12 @@ type Query struct {
 }
 
 type Item struct {
-	ContentID   int64     `json:"content_id,string"`
-	AuthorID    int64     `json:"author_id,string"`
-	ContentText string    `json:"content_text"`
-	PublishTime time.Time `json:"publish_time"`
+	ContentID       int64     `json:"content_id,string"`
+	AuthorID        int64     `json:"author_id,string"`
+	AuthorNickname  string    `json:"author_nickname"`
+	AuthorAvatarKey string    `json:"author_avatar_key"`
+	ContentText     string    `json:"content_text"`
+	PublishTime     time.Time `json:"publish_time"`
 }
 
 type Response struct {
@@ -220,11 +222,18 @@ func (s *Service) fetchPostDetails(ctx context.Context, userID int64, entries []
 	args = append(args, userID)
 
 	query := fmt.Sprintf(`
-		SELECT p.content_id, p.author_id, p.content_text, p.publish_time
+		SELECT p.content_id,
+		       p.author_id,
+		       COALESCE(NULLIF(u.nickname, ''), u.username) AS author_nickname,
+		       u.avatar_key AS author_avatar_key,
+		       p.content_text,
+		       p.publish_time
 		FROM posts p
+		JOIN users u ON u.user_id = p.author_id
 		JOIN follow_relations fr ON fr.followee_id = p.author_id
 		WHERE fr.follower_id = ?
 		  AND fr.status = 1
+		  AND u.status = 1
 		  AND p.status = 1
 		  AND p.content_id IN (%s)
 		  AND p.author_id <> ?`, strings.Join(placeholders, ","))
@@ -238,7 +247,7 @@ func (s *Service) fetchPostDetails(ctx context.Context, userID int64, entries []
 	out := make(map[int64]Item, len(ids))
 	for rows.Next() {
 		var item Item
-		if err := rows.Scan(&item.ContentID, &item.AuthorID, &item.ContentText, &item.PublishTime); err != nil {
+		if err := rows.Scan(&item.ContentID, &item.AuthorID, &item.AuthorNickname, &item.AuthorAvatarKey, &item.ContentText, &item.PublishTime); err != nil {
 			return nil, err
 		}
 		out[item.ContentID] = item

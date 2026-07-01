@@ -5,6 +5,8 @@ const state = {
   token: localStorage.getItem("fz_token") || "",
   userId: localStorage.getItem("fz_user_id") || "",
   username: localStorage.getItem("fz_username") || "",
+  nickname: localStorage.getItem("fz_nickname") || "",
+  avatarKey: localStorage.getItem("fz_avatar_key") || "",
   items: [],
   topCursor: "",
   bottomCursor: "",
@@ -151,18 +153,22 @@ function updateSessionView() {
   el.profileButton.disabled = !signedIn;
   document.body.classList.toggle("signed-in", signedIn);
 
-  el.sessionName.textContent = signedIn ? state.username || "已登录" : "Friend Zone";
+  el.sessionName.textContent = signedIn ? state.nickname || state.username || "已登录" : "Friend Zone";
   el.sessionId.textContent = signedIn && state.userId ? `ID ${state.userId}` : "登录后查看关注流";
-  el.avatar.textContent = (signedIn ? state.username || "U" : "F").slice(0, 1).toUpperCase();
+  renderProfileAvatar();
 }
 
 function saveSession(data, username) {
   state.token = data.token;
   state.userId = String(data.user_id);
-  state.username = username;
+  state.username = data.username || username;
+  state.nickname = data.nickname || data.username || username;
+  state.avatarKey = data.avatar_key || state.avatarKey || avatarKeyForID(state.userId);
   localStorage.setItem("fz_token", state.token);
   localStorage.setItem("fz_user_id", state.userId);
   localStorage.setItem("fz_username", state.username);
+  localStorage.setItem("fz_nickname", state.nickname);
+  localStorage.setItem("fz_avatar_key", state.avatarKey);
   updateSessionView();
 }
 
@@ -170,6 +176,8 @@ function clearSession() {
   state.token = "";
   state.userId = "";
   state.username = "";
+  state.nickname = "";
+  state.avatarKey = "";
   state.items = [];
   state.topCursor = "";
   state.bottomCursor = "";
@@ -178,6 +186,8 @@ function clearSession() {
   localStorage.removeItem("fz_token");
   localStorage.removeItem("fz_user_id");
   localStorage.removeItem("fz_username");
+  localStorage.removeItem("fz_nickname");
+  localStorage.removeItem("fz_avatar_key");
   updateSessionView();
   renderFeed();
   updateCursorStatus();
@@ -385,11 +395,12 @@ function renderItem(item, index) {
   const content = item.content_text || "";
   const hasMedia = content.length > 18 && index % 3 === 1;
   const isMine = String(item.author_id) === String(state.userId);
-  const authorLabel = `用户 ${item.author_id}`;
+  const authorLabel = item.author_nickname || `用户 ${item.author_id}`;
+  const authorAvatarKey = item.author_avatar_key || avatarKeyForID(item.author_id);
   return `
     <article class="feed-item ${hasMedia ? "has-media" : ""} ${isMine ? "is-mine" : ""}">
       <button class="author-trigger" type="button" data-author-id="${escapeHTML(String(item.author_id))}" title="关注或取关该用户">
-        <span class="feed-avatar" aria-hidden="true">${avatarArt(index)}</span>
+        <span class="feed-avatar" aria-hidden="true">${avatarArt(authorAvatarKey, authorLabel)}</span>
       </button>
       <div class="feed-main">
         <div class="feed-head">
@@ -454,7 +465,8 @@ function hidePostMenu() {
 function showAuthorPopover(authorId, anchor) {
   state.menuAuthorId = authorId;
   const rect = anchor.getBoundingClientRect();
-  el.authorPopoverName.textContent = `用户 ${authorId}`;
+  const item = state.items.find((feedItem) => String(feedItem.author_id) === String(authorId));
+  el.authorPopoverName.textContent = item?.author_nickname || `用户 ${authorId}`;
   el.authorPopoverId.textContent = `ID ${authorId}`;
   const isMine = String(authorId) === String(state.userId);
   el.followAuthorButton.disabled = isMine;
@@ -514,13 +526,48 @@ function relativeTime(value) {
   }).format(date);
 }
 
-function avatarArt(index) {
+function renderProfileAvatar() {
+  const label = state.token ? state.nickname || state.username || "U" : "Friend Zone";
+  el.avatar.innerHTML = avatarArt(state.avatarKey || avatarKeyForID(state.userId), label);
+}
+
+function avatarKeyForID(value) {
+  const digits = String(value || "1").replace(/\D/g, "");
+  const tail = Number(digits.slice(-4) || "1");
+  return `avatar-${(tail % 20) + 1}`;
+}
+
+function avatarIndex(key) {
+  const match = String(key || "").match(/\d+/);
+  if (!match) return 0;
+  return (Number(match[0]) - 1 + 20) % 20;
+}
+
+function avatarArt(key, label) {
+  const index = avatarIndex(key);
   const colors = [
     ["#dbeafe", "#fef3c7", "#2d4c84"],
     ["#dcfce7", "#fee2e2", "#0f766e"],
     ["#fae8ff", "#e0f2fe", "#7c2d12"],
     ["#ede9fe", "#fef9c3", "#365314"],
-  ][index % 4];
+    ["#fce7f3", "#d9f99d", "#9f1239"],
+    ["#e0f2fe", "#fde68a", "#075985"],
+    ["#fee2e2", "#ccfbf1", "#991b1b"],
+    ["#ede9fe", "#bfdbfe", "#5b21b6"],
+    ["#fef3c7", "#bbf7d0", "#854d0e"],
+    ["#cffafe", "#fecdd3", "#155e75"],
+    ["#f5d0fe", "#bae6fd", "#86198f"],
+    ["#dcfce7", "#fed7aa", "#166534"],
+    ["#e2e8f0", "#fef08a", "#334155"],
+    ["#dbeafe", "#fecaca", "#1e3a8a"],
+    ["#fef9c3", "#c4b5fd", "#713f12"],
+    ["#ccfbf1", "#fde68a", "#115e59"],
+    ["#fae8ff", "#bfdbfe", "#701a75"],
+    ["#ffedd5", "#bae6fd", "#9a3412"],
+    ["#ecfccb", "#ddd6fe", "#3f6212"],
+    ["#f1f5f9", "#fecdd3", "#475569"],
+  ][index % 20];
+  const initial = String(label || "U").trim().slice(0, 1).toUpperCase() || "U";
   return `
     <svg viewBox="0 0 74 74" role="img">
       <rect width="74" height="74" rx="10" fill="${colors[0]}"></rect>
@@ -528,6 +575,7 @@ function avatarArt(index) {
       <circle cx="49" cy="20" r="10" fill="#fff"></circle>
       <path d="M12 58 C18 38, 34 36, 42 48 C48 57, 56 44, 66 54 L66 74 L12 74 Z" fill="${colors[2]}" opacity=".82"></path>
       <circle cx="31" cy="34" r="5" fill="#1f2429" opacity=".55"></circle>
+      <text x="48" y="48" fill="#ffffff" font-size="20" font-weight="700" text-anchor="middle">${escapeHTML(initial)}</text>
     </svg>
   `;
 }
@@ -551,7 +599,7 @@ el.logoutButton.addEventListener("click", () => {
 });
 el.profileButton.addEventListener("click", () => {
   if (!state.token) return;
-  showToast(`${state.username || "已登录"} · ${state.userId}`);
+  showToast(`${state.nickname || state.username || "已登录"} · ${state.userId}`);
 });
 el.postText.addEventListener("input", updateCounter);
 el.publishButton.addEventListener("click", publishPost);
