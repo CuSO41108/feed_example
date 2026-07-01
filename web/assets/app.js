@@ -418,10 +418,6 @@ function renderItem(item, index) {
         </div>
         <div class="feed-foot">
           <span>${relativeTime(item.publish_time)}</span>
-          <span>·</span>
-          <strong>关注流</strong>
-          <span>·</span>
-          <span>内容 ${escapeHTML(String(item.content_id))}</span>
         </div>
         <div class="like-row">
           <i data-lucide="heart"></i>

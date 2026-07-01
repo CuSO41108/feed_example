@@ -570,11 +570,6 @@ button:disabled {
   font-size: 19px;
 }
 
-.feed-foot strong {
-  color: var(--blue);
-  font-weight: 650;
-}
-
 .like-row {
   display: none;
   align-items: center;
