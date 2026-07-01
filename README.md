@@ -23,6 +23,12 @@ API:
 - Swagger UI: `http://localhost:8080/swagger/index.html`
 - Kafka UI: `http://localhost:8081`
 
+Demo login:
+
+- Username: `demo_reader`
+- Password: `demo123456`
+- The seed data includes 20 followed authors with nicknames, avatar keys, and random text posts.
+
 ## Scope
 
 This first version focuses on the Timeline Feed main path:
