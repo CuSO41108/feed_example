@@ -495,7 +495,7 @@ button:disabled {
 
 .more-button {
   display: grid;
-  width: 50px;
+  width: 52px;
   height: 38px;
   flex: 0 0 auto;
   place-items: center;
@@ -510,7 +510,7 @@ button:disabled {
 }
 
 .post-body {
-  margin: 0 0 24px;
+  margin: 0 0 20px;
   color: #202327;
   font-size: 21px;
   line-height: 1.6;
@@ -564,7 +564,8 @@ button:disabled {
 .feed-foot {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  flex-wrap: nowrap;
   gap: 8px;
   color: var(--muted);
   font-size: 19px;
@@ -649,12 +650,20 @@ button:disabled {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--rose);
+  color: var(--blue);
   padding: 10px;
   text-align: left;
 }
 
 .post-menu button:hover {
+  background: #eef4fb;
+}
+
+#deletePostButton {
+  color: var(--rose);
+}
+
+#deletePostButton:hover {
   background: #fff1f0;
 }
 

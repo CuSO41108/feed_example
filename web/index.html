@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Friend Zone</title>
-  <link rel="stylesheet" href="/assets/app.css?v=7">
+  <link rel="stylesheet" href="/assets/app.css?v=8">
 </head>
 <body>
   <div class="moment-shell">
@@ -78,6 +78,14 @@
   </div>
 
   <div class="post-menu hidden" id="postMenu">
+    <button id="likePostButton" type="button">
+      <i data-lucide="heart"></i>
+      点赞
+    </button>
+    <button id="commentPostButton" type="button">
+      <i data-lucide="message-circle"></i>
+      评论
+    </button>
     <button id="deletePostButton" type="button">
       <i data-lucide="trash-2"></i>
       删除动态
@@ -95,6 +103,6 @@
 
   <div class="toast hidden" id="toast" role="status"></div>
 
-  <script src="/assets/app.js?v=7"></script>
+  <script src="/assets/app.js?v=8"></script>
 </body>
 </html>

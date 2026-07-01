@@ -54,6 +54,8 @@ const el = {
   lastAction: $("lastAction"),
   toast: $("toast"),
   postMenu: $("postMenu"),
+  likePostButton: $("likePostButton"),
+  commentPostButton: $("commentPostButton"),
   deletePostButton: $("deletePostButton"),
 };
 
@@ -65,6 +67,7 @@ function mountIcons() {
     "more-horizontal": '<circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>',
     "trash-2": '<path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>',
     heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"></path>',
+    "message-circle": '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>',
     play: '<polygon points="6 3 20 12 6 21 6 3"></polygon>',
   };
   document.querySelectorAll("i[data-lucide]").forEach((node) => {
@@ -405,9 +408,6 @@ function renderItem(item, index) {
       <div class="feed-main">
         <div class="feed-head">
           <h2 class="feed-author">${escapeHTML(authorLabel)}</h2>
-          <button class="more-button" type="button" data-content-id="${escapeHTML(String(item.content_id))}" data-owned="${isMine ? "true" : "false"}" title="更多">
-            <i data-lucide="more-horizontal"></i>
-          </button>
         </div>
         <p class="post-body">${escapeHTML(content)}</p>
         <div class="post-media">
@@ -418,6 +418,9 @@ function renderItem(item, index) {
         </div>
         <div class="feed-foot">
           <span>${relativeTime(item.publish_time)}</span>
+          <button class="more-button" type="button" data-content-id="${escapeHTML(String(item.content_id))}" data-owned="${isMine ? "true" : "false"}" title="更多">
+            <i data-lucide="more-horizontal"></i>
+          </button>
         </div>
         <div class="like-row">
           <i data-lucide="heart"></i>
@@ -449,14 +452,10 @@ function bindAuthorTriggers() {
 
 function showPostMenu(contentId, isOwned, anchor) {
   hideAuthorPopover();
-  if (!isOwned) {
-    hidePostMenu();
-    showToast("只能删除自己的动态");
-    return;
-  }
   state.menuContentId = contentId;
   const rect = anchor.getBoundingClientRect();
-  el.postMenu.style.left = `${Math.max(12, rect.right - 148)}px`;
+  el.deletePostButton.classList.toggle("hidden", !isOwned);
+  el.postMenu.style.left = `${Math.max(12, rect.right - 172)}px`;
   el.postMenu.style.top = `${rect.bottom + 8}px`;
   el.postMenu.classList.remove("hidden");
 }
@@ -612,6 +611,16 @@ el.notifyButton.addEventListener("click", () => showToast(el.apiStatus.textConte
 el.loadOlderButton.addEventListener("click", () => loadFeed("older"));
 el.followAuthorButton.addEventListener("click", () => followAuthor(true));
 el.unfollowAuthorButton.addEventListener("click", () => followAuthor(false));
+el.likePostButton.addEventListener("click", () => {
+  hidePostMenu();
+  showToast("点赞功能后端暂未接入");
+  setLastAction("点赞占位");
+});
+el.commentPostButton.addEventListener("click", () => {
+  hidePostMenu();
+  showToast("评论功能后端暂未接入");
+  setLastAction("评论占位");
+});
 el.deletePostButton.addEventListener("click", deletePost);
 el.stream.addEventListener("wheel", handleWheel, { passive: true });
 document.addEventListener("click", (event) => {
