@@ -65,53 +65,59 @@ ON DUPLICATE KEY UPDATE
   updated_at = VALUES(updated_at);
 
 INSERT INTO follow_relations (follower_id, followee_id, status, created_at, updated_at)
-VALUES
-  (100000000000000000, 100000000000000001, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000002, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000003, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000004, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000005, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000006, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000007, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000008, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000009, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000010, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000011, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000012, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000013, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000014, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000015, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000016, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000017, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000018, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000019, 1, @seed_now, @seed_now),
-  (100000000000000000, 100000000000000020, 1, @seed_now, @seed_now)
+SELECT readers.user_id, authors.user_id, 1, @seed_now, @seed_now
+FROM users AS readers
+JOIN users AS authors ON authors.username LIKE 'demo_author\_%'
+WHERE readers.status = 1
+  AND authors.status = 1
+  AND (readers.username = 'demo_reader' OR readers.username LIKE '%reader%')
+  AND readers.user_id <> authors.user_id
 ON DUPLICATE KEY UPDATE
   status = VALUES(status),
   updated_at = VALUES(updated_at);
 
+UPDATE users AS u
+LEFT JOIN (
+  SELECT followee_id AS user_id, COUNT(*) AS follower_count
+  FROM follow_relations
+  WHERE status = 1
+  GROUP BY followee_id
+) AS followers ON followers.user_id = u.user_id
+LEFT JOIN (
+  SELECT follower_id AS user_id, COUNT(*) AS following_count
+  FROM follow_relations
+  WHERE status = 1
+  GROUP BY follower_id
+) AS following ON following.user_id = u.user_id
+SET u.follower_count = COALESCE(followers.follower_count, 0),
+    u.following_count = COALESCE(following.following_count, 0),
+    u.updated_at = @seed_now
+WHERE u.username = 'demo_reader'
+   OR u.username LIKE '%reader%'
+   OR u.username LIKE 'demo_author\_%';
+
 INSERT INTO posts (content_id, author_id, content_text, status, publish_time, created_at, updated_at)
 VALUES
-  (200000000000000001, 100000000000000001, '今天把关注流的收件箱压测了一轮，分页游标终于稳定了。', 1, DATE_SUB(@seed_now, INTERVAL 5 MINUTE), @seed_now, @seed_now),
-  (200000000000000002, 100000000000000002, '午后咖啡配系统设计图，脑子里全是 push 和 pull 的边界。', 1, DATE_SUB(@seed_now, INTERVAL 12 MINUTE), @seed_now, @seed_now),
-  (200000000000000003, 100000000000000003, '把 Redis ZSET 的最近 1000 条缓存梳理了一遍，刷新速度很舒服。', 1, DATE_SUB(@seed_now, INTERVAL 18 MINUTE), @seed_now, @seed_now),
-  (200000000000000004, 100000000000000004, '今天的随机动态：先写清楚数据模型，再写代码，少走很多弯路。', 1, DATE_SUB(@seed_now, INTERVAL 26 MINUTE), @seed_now, @seed_now),
-  (200000000000000005, 100000000000000005, 'Kafka fanout chunk 跑起来后，整个发布链路看起来顺眼多了。', 1, DATE_SUB(@seed_now, INTERVAL 35 MINUTE), @seed_now, @seed_now),
-  (200000000000000006, 100000000000000006, '给大 V 做推拉结合时，最关键的是别让普通用户刷新时等太久。', 1, DATE_SUB(@seed_now, INTERVAL 43 MINUTE), @seed_now, @seed_now),
-  (200000000000000007, 100000000000000007, '今天的页面背景比纯白舒服，信息流也更像朋友圈了。', 1, DATE_SUB(@seed_now, INTERVAL 51 MINUTE), @seed_now, @seed_now),
-  (200000000000000008, 100000000000000008, '调了一下头像入口，关注动作藏在用户头像里，界面清爽很多。', 1, DATE_SUB(@seed_now, INTERVAL 67 MINUTE), @seed_now, @seed_now),
-  (200000000000000009, 100000000000000009, '发动态、入 outbox、拆 fanout，串起来之后主链路就完整了。', 1, DATE_SUB(@seed_now, INTERVAL 83 MINUTE), @seed_now, @seed_now),
-  (200000000000000010, 100000000000000010, '下拉刷新拿最新，上滑加载拿更早，排序一定要按时间和 ID 双字段。', 1, DATE_SUB(@seed_now, INTERVAL 104 MINUTE), @seed_now, @seed_now),
-  (200000000000000011, 100000000000000011, '今天给 demo 数据补了昵称和头像，终于不是一排用户 ID 了。', 1, DATE_SUB(@seed_now, INTERVAL 132 MINUTE), @seed_now, @seed_now),
-  (200000000000000012, 100000000000000012, '如果缓存没命中就回 MySQL，第一版这样已经足够稳。', 1, DATE_SUB(@seed_now, INTERVAL 155 MINUTE), @seed_now, @seed_now),
-  (200000000000000013, 100000000000000013, '把正文详情延迟到读 Feed 时批量查，收件箱就轻很多。', 1, DATE_SUB(@seed_now, INTERVAL 181 MINUTE), @seed_now, @seed_now),
-  (200000000000000014, 100000000000000014, '今天记录：逻辑删除只改 status，读 Feed 时过滤掉 deleted。', 1, DATE_SUB(@seed_now, INTERVAL 219 MINUTE), @seed_now, @seed_now),
-  (200000000000000015, 100000000000000015, '本地 docker compose 一键起来，开发体验就会顺很多。', 1, DATE_SUB(@seed_now, INTERVAL 248 MINUTE), @seed_now, @seed_now),
-  (200000000000000016, 100000000000000016, '做关注流时，幂等比想象中重要，每个 content 只能进同一个收件箱一次。', 1, DATE_SUB(@seed_now, INTERVAL 296 MINUTE), @seed_now, @seed_now),
-  (200000000000000017, 100000000000000017, '今天把 API 文档又补了一点，前后端对字段更有默契。', 1, DATE_SUB(@seed_now, INTERVAL 337 MINUTE), @seed_now, @seed_now),
-  (200000000000000018, 100000000000000018, '随机内容也要像真实用户写的，不然 Feed 一眼就是假数据。', 1, DATE_SUB(@seed_now, INTERVAL 389 MINUTE), @seed_now, @seed_now),
-  (200000000000000019, 100000000000000019, '发布以后先写发件箱，再异步 fanout 到粉丝收件箱，这条链路很清晰。', 1, DATE_SUB(@seed_now, INTERVAL 451 MINUTE), @seed_now, @seed_now),
-  (200000000000000020, 100000000000000020, '晚上收工前再刷一遍 Timeline，最新内容排在最前面才安心。', 1, DATE_SUB(@seed_now, INTERVAL 524 MINUTE), @seed_now, @seed_now)
+  (200000000000000001, 100000000000000001, '早上路过楼下花店，老板把向日葵摆到门口，整条街都亮了一点。', 1, DATE_SUB(@seed_now, INTERVAL 5 MINUTE), @seed_now, @seed_now),
+  (200000000000000002, 100000000000000002, '今天的早餐是豆浆、油条和一个刚出锅的茶叶蛋，热乎乎的很满足。', 1, DATE_SUB(@seed_now, INTERVAL 12 MINUTE), @seed_now, @seed_now),
+  (200000000000000003, 100000000000000003, '傍晚去河边散步，风把桂花味吹了一路，走着走着心情就慢下来了。', 1, DATE_SUB(@seed_now, INTERVAL 18 MINUTE), @seed_now, @seed_now),
+  (200000000000000004, 100000000000000004, '地铁上看到一个小朋友认真给玩具熊系安全带，今天的小确幸达成。', 1, DATE_SUB(@seed_now, INTERVAL 26 MINUTE), @seed_now, @seed_now),
+  (200000000000000005, 100000000000000005, '午休去买咖啡，店员在杯套上画了一个笑脸，下午开工都轻松一点。', 1, DATE_SUB(@seed_now, INTERVAL 35 MINUTE), @seed_now, @seed_now),
+  (200000000000000006, 100000000000000006, '下班顺手买了半个西瓜，冰箱里一放，今晚的快乐就有着落了。', 1, DATE_SUB(@seed_now, INTERVAL 43 MINUTE), @seed_now, @seed_now),
+  (200000000000000007, 100000000000000007, '今天云很好看，像一大块被太阳晒软的棉花糖。', 1, DATE_SUB(@seed_now, INTERVAL 51 MINUTE), @seed_now, @seed_now),
+  (200000000000000008, 100000000000000008, '周末把阳台整理了一下，薄荷长得特别精神，靠近就有清凉味。', 1, DATE_SUB(@seed_now, INTERVAL 67 MINUTE), @seed_now, @seed_now),
+  (200000000000000009, 100000000000000009, '晚饭做了番茄牛腩，汤汁拌米饭太香了，明天还想继续吃。', 1, DATE_SUB(@seed_now, INTERVAL 83 MINUTE), @seed_now, @seed_now),
+  (200000000000000010, 100000000000000010, '雨停以后空气特别干净，路灯下面还能看到一点点水汽。', 1, DATE_SUB(@seed_now, INTERVAL 104 MINUTE), @seed_now, @seed_now),
+  (200000000000000011, 100000000000000011, '给书桌换了一个小台灯，暖黄色一开，房间突然像周五晚上。', 1, DATE_SUB(@seed_now, INTERVAL 132 MINUTE), @seed_now, @seed_now),
+  (200000000000000012, 100000000000000012, '今天没有赶时间，慢慢吃完一碗面，连汤都觉得刚刚好。', 1, DATE_SUB(@seed_now, INTERVAL 155 MINUTE), @seed_now, @seed_now),
+  (200000000000000013, 100000000000000013, '路边新开了一家面包店，黄油香从门口飘出来，没忍住买了两个。', 1, DATE_SUB(@seed_now, INTERVAL 181 MINUTE), @seed_now, @seed_now),
+  (200000000000000014, 100000000000000014, '晚上洗完衣服晒到阳台，风吹起来的时候有种很安心的生活感。', 1, DATE_SUB(@seed_now, INTERVAL 219 MINUTE), @seed_now, @seed_now),
+  (200000000000000015, 100000000000000015, '今天给自己买了一束小雏菊，放在餐桌上，吃饭都变得认真了。', 1, DATE_SUB(@seed_now, INTERVAL 248 MINUTE), @seed_now, @seed_now),
+  (200000000000000016, 100000000000000016, '跑步回来喝了一大杯冰水，耳机里刚好播到喜欢的歌。', 1, DATE_SUB(@seed_now, INTERVAL 296 MINUTE), @seed_now, @seed_now),
+  (200000000000000017, 100000000000000017, '楼下小猫今天终于肯靠近一点了，蹲在台阶上看了我三秒。', 1, DATE_SUB(@seed_now, INTERVAL 337 MINUTE), @seed_now, @seed_now),
+  (200000000000000018, 100000000000000018, '把冰箱里剩下的菜都做成了炒饭，意外很好吃，粒粒分明。', 1, DATE_SUB(@seed_now, INTERVAL 389 MINUTE), @seed_now, @seed_now),
+  (200000000000000019, 100000000000000019, '傍晚骑车经过学校操场，听到有人在练吉他，夏天好像提前到了。', 1, DATE_SUB(@seed_now, INTERVAL 451 MINUTE), @seed_now, @seed_now),
+  (200000000000000020, 100000000000000020, '睡前把明天要穿的衣服搭好了，感觉已经提前赢了一点明天。', 1, DATE_SUB(@seed_now, INTERVAL 524 MINUTE), @seed_now, @seed_now)
 ON DUPLICATE KEY UPDATE
   content_text = VALUES(content_text),
   status = VALUES(status),
@@ -126,8 +132,10 @@ ON DUPLICATE KEY UPDATE
   publish_time = VALUES(publish_time);
 
 INSERT INTO user_feed_inbox (user_id, content_id, author_id, publish_time)
-SELECT 100000000000000000, content_id, author_id, publish_time
-FROM posts
-WHERE content_id BETWEEN 200000000000000001 AND 200000000000000020
+SELECT readers.user_id, posts.content_id, posts.author_id, posts.publish_time
+FROM users AS readers
+JOIN posts ON posts.content_id BETWEEN 200000000000000001 AND 200000000000000020
+WHERE readers.status = 1
+  AND (readers.username = 'demo_reader' OR readers.username LIKE '%reader%')
 ON DUPLICATE KEY UPDATE
   publish_time = VALUES(publish_time);
