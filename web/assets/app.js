@@ -405,7 +405,7 @@ function renderItem(item, index) {
       <div class="feed-main">
         <div class="feed-head">
           <h2 class="feed-author">${escapeHTML(authorLabel)}</h2>
-          <button class="more-button" type="button" data-content-id="${escapeHTML(String(item.content_id))}" title="更多">
+          <button class="more-button" type="button" data-content-id="${escapeHTML(String(item.content_id))}" data-owned="${isMine ? "true" : "false"}" title="更多">
             <i data-lucide="more-horizontal"></i>
           </button>
         </div>
@@ -432,7 +432,8 @@ function bindMoreButtons() {
   document.querySelectorAll(".more-button").forEach((button) => {
     button.addEventListener("click", (event) => {
       const id = button.getAttribute("data-content-id") || "";
-      showPostMenu(id, event.currentTarget);
+      const isOwned = button.getAttribute("data-owned") === "true";
+      showPostMenu(id, isOwned, event.currentTarget);
     });
   });
 }
@@ -446,7 +447,13 @@ function bindAuthorTriggers() {
   });
 }
 
-function showPostMenu(contentId, anchor) {
+function showPostMenu(contentId, isOwned, anchor) {
+  hideAuthorPopover();
+  if (!isOwned) {
+    hidePostMenu();
+    showToast("只能删除自己的动态");
+    return;
+  }
   state.menuContentId = contentId;
   const rect = anchor.getBoundingClientRect();
   el.postMenu.style.left = `${Math.max(12, rect.right - 148)}px`;
